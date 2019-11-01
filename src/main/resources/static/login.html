@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>登录页面</title>
+    <link rel="stylesheet" href="/js/bootstrap/css/bootstrap.min.css">
+</head>
+<body>
+<div>
+
+    <!-- Nav tabs -->
+    <ul class="nav nav-pills" role="tablist" id="myTabs">
+        <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">账号密码登录</a></li>
+        <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">免密登录</a></li>
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="home">
+            <form class="form-control">
+                <div class="form-group">
+                    <label>账号：</label>
+                    <input type="text" id="membersName">
+                </div>
+                <div class="form-group">
+                    <label>密码：</label>
+                    <input type="password" id="password">
+                </div>
+                <input type="button" value="登录" onclick="login()">
+                <input type="reset">
+            </form>
+        </div>
+        <div role="tabpanel" class="tab-pane" id="profile">
+            <form class="form-control">
+                <div class="form-group">
+                    <label>手机号：</label>
+                    <input type="text" id="PhoneNumbers">
+                </div>
+                <div class="form-group">
+                    <label>验证码：</label>
+                    <input type="text" id="code">
+                    <button type="button" onclick="sendCode()" class="btn btn-primary" id="send">发送验证码</button>
+                </div>
+                <input type="button" value="登录" onclick="loginMSM()">
+                <input type="reset">
+            </form>
+        </div>
+    </div>
+
+</div>
+<script src="/js/jquery-3.3.1.min.js"></script>
+<script src="/js/jquery.cookie.min.js"></script>
+<script src="js/bootstrap/js/bootstrap.min.js"></script>
+<script>
+    function login(){
+        var membersName=$("#membersName").val();
+        var password=$("#password").val();
+        var param={};
+        param.membersName=membersName;
+        param.password=password;
+        $.ajax({
+            url:"http://localhost:8082/members/login",
+            type:"post",
+            data:param,
+            success:function(res){
+                if (res.code==200){
+                    //将临时信息存入cookie
+                    $.cookie("fh_token",res.data);
+                    location.href="/";
+                } else{
+                    alert(res.msg);
+                }
+            }
+        })
+    }
+
+    function findPhone(phone) {
+    }
+
+    function sendCode() {
+        $("#send").attr("disabled",true);
+        var phoneNumbers=$("#PhoneNumbers").val();
+        $.ajax({
+            type:"post",
+            url:"http://localhost:8082/members/login/phone",
+            data:{"PhoneNumbers":phoneNumbers},
+            aysnc:false,
+            success:function (res) {
+                if(res.code==200){
+                    $.ajax({
+                     type:"get",
+                     url:"http://localhost:8082/sms",
+                     data:{"PhoneNumbers":phoneNumbers},
+                     success:function (res) {
+                         if(res.code==200){
+                             alert("发送成功!")
+                         }else {
+                             alert(res.msg)
+                         }
+                     }
+                 })
+                }else {
+                    alert(res.msg)
+                }
+            }
+        })
+    }
+
+    function send() {
+
+   }
+
+    function loginMSM(){
+        var param={};
+        param.msg=$("#PhoneNumbers").val();
+        param.obj=$("#code").val();
+        $.ajax({
+            type:"post",
+            url:"http://localhost:8082/members/login/sms",
+            data:param,
+            success:function (res) {
+                if(res.code==200){
+                    //将临时信息存入cookie
+                    $.cookie("fh_token",res.data);
+                    location.href="/";
+                }else {
+                    alert(res.msg)
+                }
+            }
+        })
+    }
+
+    $(function () {
+        $('#myTabs a').click(function (e) {
+            e.preventDefault()
+            $(this).tab('show')
+        })
+    })
+</script>
+</body>
+</html>
